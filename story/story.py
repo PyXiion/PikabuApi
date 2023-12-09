@@ -1,20 +1,21 @@
 from aiohttp import ClientSession
 from datetime import datetime
 from ..types.response.get_story import GetStory as GetStoryPayload
-from ..types.response.story import Story as StoryPayload
 from ..types.story_query import StoryQuery
-from ..types.create_comment_query import CreateCommentQuery
+from ..item import Item
 from ..community import Community
 from ..user import User
 from ..request import make_request
 from .comments_page import CommentsPage
 
 
-class Story:
-  def __init__(self, session: ClientSession, payload: GetStoryPayload, user_id = None) -> None:
+class Story(Item):
+  def __init__(self, session: ClientSession, payload: GetStoryPayload, user_id: int | None = None) -> None:
     story_payload = payload["story"]
     self._session = session
     self._user_id = user_id
+
+    super().__init__(self._session, story_payload["story_id"], "story", self._user_id)
 
     self.id = story_payload["story_id"]
     self.title = story_payload["story_title"]
@@ -112,12 +113,10 @@ class Story:
     self.views_count = await Story.get_views_by_id(self._session, self.id)
     return self.views_count
 
-  async def get_comments(self):
-    ...
-
   async def comment(self, text: str) -> bool:
     if not self._user_id:
       raise RuntimeError("Not authed")
+    
     from ..comment import Comment
     response = await Comment.create(self._session, self.id, self._user_id, text)
     return 'comment' in response
