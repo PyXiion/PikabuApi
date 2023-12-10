@@ -1,11 +1,13 @@
 from aiohttp import ClientSession
-from .types.response.community import GetCommunity as GetCommunityPayload
+from pikabu.types.response.community import GetCommunity as GetCommunityPayload
+from pikabu.types.community_query import CommunityQuery
 
 class CommunityLink:
   def __init__(self, id: int, name: str, link: str) -> None:
     self.id = id
     self.name = name
     self.link = link
+
 
 class Community:
   def __init__(self, session: ClientSession, payload: GetCommunityPayload, user_id: int | None = None) -> None:
@@ -14,8 +16,21 @@ class Community:
 
     self._payload = payload
 
-  # @staticmethod
-  # def _get_by_link_name():
+  @staticmethod
+  async def _get_by_link_name(session: ClientSession, communty_link_name: str, user_id: int = None) -> GetCommunityPayload:
+    query: CommunityQuery = {
+      "name": communty_link_name
+    }
+    if user_id:
+      query["user_id"] = user_id
+
+    from pikabu.request import make_request
+    return await make_request(session, "community.get", query)
+
+  @staticmethod
+  async def get_by_id(session: ClientSession, community_link_name: str, user_id: int = None):
+    payload = await Community._get_by_link_name(session, community_link_name, user_id)
+    return Community(session, payload, user_id)
 
   @property
   def id(self):
@@ -40,6 +55,18 @@ class Community:
   @property
   def restriction(self):
     return self._payload["restriction"]
+
+  @property
+  def raw_community_admin(self):
+    return self._payload["community_admin"]
+
+  @property
+  def raw_community_moderators(self):
+    return self._payload["community_moderators"]
+
+  @property
+  def raw_community_chiefs(self):
+    return self._payload["community_chiefs"]
 
   # TODO community_admin, community_moderators, community_chiefs
 

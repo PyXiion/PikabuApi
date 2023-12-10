@@ -3,6 +3,7 @@ from yarl import URL
 from random import randint
 from datetime import date
 
+from .community import Community, CommunitiesList
 from .user import User, Profile
 from .search import Search
 from .story import Story
@@ -77,6 +78,12 @@ class Session:
   async def get_user_by_id(self, id: int) -> User:
     from .helpers.get_user_name_by_id import get_user_name_by_id
     return User(self.__session, id, await get_user_name_by_id(self.__session, id))
+
+  async def get_community_by_link_name(self, link_name: str) -> Community:
+    return await Community.get_by_id(self.get_session(), link_name, self.__user_id)
+
+  def get_all_communities(self):
+    return CommunitiesList(self.get_session())
 
   def search(self, *, 
                    text: str = None, 
